@@ -1,0 +1,90 @@
+<div class="bg-surface-50 dark:bg-surface-950 flex items-center justify-center min-h-screen min-w-screen overflow-hidden">
+  <div class="flex flex-col items-center justify-center">
+    <div style="border-radius: 56px; padding: 0.3rem; background: linear-gradient(180deg, var(--primary-color) 10%, rgba(33, 150, 243, 0) 30%)">
+      <div class="w-full bg-surface-0 dark:bg-surface-900 py-20 px-8 sm:px-20" style="border-radius: 53px; min-width: 450px;">
+
+        @if (!success()) {
+          <div class="text-center mb-8">
+            <div class="flex justify-center items-center mb-4">
+              <div class="flex justify-center items-center bg-primary/10 rounded-full" style="width: 3.5rem; height: 3.5rem">
+                <i class="pi pi-envelope text-primary text-3xl"></i>
+              </div>
+            </div>
+            <div class="text-surface-900 dark:text-surface-0 text-3xl font-medium mb-4">Resend Verification</div>
+            <span class="text-muted-color font-medium">Enter your email to receive a new verification link</span>
+          </div>
+
+          <form [formGroup]="resendForm" (ngSubmit)="onSubmit()">
+            @if (error()) {
+              <p-message severity="error" [text]="error()!" styleClass="w-full mb-4" />
+            }
+
+            <div class="mb-6">
+              <label for="email" class="block text-surface-900 dark:text-surface-0 text-xl font-medium mb-2">
+                Email Address
+              </label>
+              <input
+                pInputText
+                id="email"
+                type="email"
+                formControlName="email"
+                placeholder="Enter your email"
+                class="w-full"
+                [class.ng-invalid]="emailControl?.invalid && emailControl?.touched"
+                [class.ng-dirty]="emailControl?.touched"
+              />
+              @if (emailControl?.invalid && emailControl?.touched) {
+                <small class="text-red-500">
+                  @if (emailControl?.errors?.['required']) {
+                    Email is required
+                  }
+                  @if (emailControl?.errors?.['email']) {
+                    Please enter a valid email
+                  }
+                </small>
+              }
+            </div>
+
+            <p-button
+              label="Resend Verification Email"
+              type="submit"
+              styleClass="w-full mb-4"
+              [loading]="loading()"
+              [disabled]="resendForm.invalid"
+            />
+
+            <div class="text-center">
+              <a
+                routerLink="/auth/login"
+                class="font-medium text-primary hover:underline cursor-pointer inline-flex items-center"
+              >
+                <i class="pi pi-arrow-left mr-2"></i>
+                Back to Login
+              </a>
+            </div>
+          </form>
+        } @else {
+          <div class="text-center">
+            <div class="flex justify-center items-center mb-4">
+              <div class="flex justify-center items-center bg-green-100 dark:bg-green-400/10 rounded-full" style="width: 3.5rem; height: 3.5rem">
+                <i class="pi pi-check text-green-500 text-3xl"></i>
+              </div>
+            </div>
+            <div class="text-surface-900 dark:text-surface-0 text-3xl font-medium mb-4">Check Your Email</div>
+            <p class="text-muted-color mb-6">
+              If an account exists with that email, we've sent a new verification link.
+              Please check your inbox and spam folder.
+            </p>
+
+            <p-button
+              label="Back to Login"
+              routerLink="/auth/login"
+              styleClass="w-full"
+              [outlined]="true"
+            />
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+</div>

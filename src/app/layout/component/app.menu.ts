@@ -72,6 +72,7 @@ export class AppMenu {
                             {
                                 label: 'Auth',
                                 icon: 'pi pi-fw pi-user',
+                                path: '/auth',
                                 items: [
                                     {
                                         label: 'Login',

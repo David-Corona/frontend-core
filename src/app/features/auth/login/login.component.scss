@@ -1,0 +1,13 @@
+:host ::ng-deep {
+  .p-password {
+    width: 100%;
+
+    input {
+      width: 100%;
+    }
+  }
+
+  .p-message {
+    margin-bottom: 1rem;
+  }
+}
