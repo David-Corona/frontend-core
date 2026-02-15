@@ -58,13 +58,4 @@ export class TokenService {
       return null;
     }
   }
-
-  isTokenExpiringSoon(thresholdMinutes: number = 5): boolean {
-    const expirationTime = this.getTokenExpirationTime();
-    if (!expirationTime) return true;
-
-    const now = Date.now();
-    const threshold = thresholdMinutes * 60 * 1000;
-    return expirationTime - now < threshold;
-  }
 }

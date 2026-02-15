@@ -23,8 +23,11 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
         if (!isAuthEndpoint && tokenService.hasValidToken()) {
           return authService.refreshToken().pipe(
             switchMap(() => {
-              // Retry original request with new token
-              return next(req);
+                const token = tokenService.getAccessToken();
+                const clonedReq = req.clone({
+                    setHeaders: { Authorization: `Bearer ${token}` }
+                });
+                return next(clonedReq);
             }),
             catchError((refreshError) => {
               // Refresh failed - token is likely invalid, redirect to login

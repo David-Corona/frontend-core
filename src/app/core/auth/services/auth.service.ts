@@ -1,7 +1,7 @@
 import { Injectable, inject, signal, computed } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Router } from '@angular/router';
-import { Observable, tap, catchError, throwError, BehaviorSubject, timer, switchMap } from 'rxjs';
+import { Observable, tap, catchError, throwError, timer, switchMap } from 'rxjs';
 import { TokenService } from './token.service';
 import { LoginRequest, RegisterRequest, AuthResponse, VerifyEmailRequest, ResendVerificationRequest,
     ForgotPasswordRequest, ResetPasswordRequest, SessionListResponse, Session } from '../models/auth-response.model';
@@ -17,9 +17,6 @@ export class AuthService {
     private tokenService = inject(TokenService);
 
     // State management
-    private currentUserSubject = new BehaviorSubject<User | null>(null);
-    public currentUser$ = this.currentUserSubject.asObservable();
-
     currentUser = signal<User | null>(null);
     isAuthenticated = computed(() => !!this.currentUser());
     isAdmin = computed(() => this.currentUser()?.roles.includes('admin') ?? false);
@@ -30,8 +27,7 @@ export class AuthService {
     private readonly REFRESH_BEFORE_EXPIRY_MINUTES = 5;
 
     constructor() {
-        // Initialization is deferred to avoid circular dependency
-        // See app.config.ts for APP_INITIALIZER setup
+        // Initialization is deferred to avoid circular dependency with interceptors
     }
 
     /**
@@ -43,12 +39,14 @@ export class AuthService {
             this.loadCurrentUser().subscribe({
                 next: () => this.startTokenRefreshTimer(),
                 error: (err) => {
-                    // Only clear auth data if it's a 401/403 or clear auth failure
-                    // Don't clear on network errors - token might still be valid
+                    // Only clear if token is invalid (401/403)
+                    // Keep token for network errors - guard will retry
                     if (err.status === 401 || err.status === 403) {
+                        console.error('Invalid token, clearing auth data');
                         this.clearAuthData();
+                    } else {
+                        console.warn('Failed to load user on startup (network error):', err);
                     }
-                    console.error('Failed to load user during init:', err);
                 }
             });
         }
@@ -143,6 +141,14 @@ export class AuthService {
         return this.http.post<{ message: string }>(`${environment.apiUrl}/auth/reset-password`, request);
     }
 
+    /**
+     * Public method for guards to load and sync user state
+     * Called when user signal isn't initialized but token exists
+     */
+    public reloadUser(): Observable<User> {
+        return this.loadCurrentUser();
+    }
+
     private loadCurrentUser(): Observable<User> {
         return this.getMe().pipe(tap((user) => this.updateUserState(user)));
     }
@@ -155,18 +161,11 @@ export class AuthService {
 
     private updateUserState(user: User): void {
         this.currentUser.set(user);
-        this.currentUserSubject.next(user);
-    }
-
-    // Public method for guard to update user state
-    setCurrentUser(user: User): void {
-        this.updateUserState(user);
     }
 
     private clearAuthData(): void {
         this.tokenService.clearAccessToken();
         this.currentUser.set(null);
-        this.currentUserSubject.next(null);
         this.stopTokenRefreshTimer();
     }
 

@@ -23,13 +23,10 @@ export const authGuard: CanActivateFn = (route, state) => {
   }
 
   // Have a valid token but user signal not initialized yet, load user
-  return authService.getMe().pipe(
+  // Note: User state is automatically updated by reloadUser()
+  return authService.reloadUser().pipe(
     take(1),
-    map((user) => {
-      // User loaded successfully, ensure state is updated
-      authService.setCurrentUser(user);
-      return true;
-    }),
+    map(() => true),
     catchError(() => {
       // Token is invalid despite hasValidToken returning true, clear and redirect
       tokenService.clearAccessToken();

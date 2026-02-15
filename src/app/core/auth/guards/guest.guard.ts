@@ -1,6 +1,6 @@
 import { inject } from '@angular/core';
 import { Router, type CanActivateFn } from '@angular/router';
-import { tap, catchError, map } from 'rxjs/operators';
+import { tap, catchError, map, take } from 'rxjs/operators';
 import { AuthService } from '../services/auth.service';
 import { TokenService } from '../services/token.service';
 
@@ -22,12 +22,10 @@ export const guestGuard: CanActivateFn = (route, state) => {
   // If there's a valid token, user should not be on login/register pages
   // This prevents accessing auth pages even if signal hasn't loaded yet
   if (tokenService.hasValidToken()) {
-    // Wait for signal to be populated or load the user
-    return authService.getMe().pipe(
-      tap((user) => {
-        authService.setCurrentUser(user);
-        router.navigate(['/']);
-      }),
+    // Load user and redirect (user state is automatically updated by reloadUser())
+    return authService.reloadUser().pipe(
+      take(1),
+      tap(() => router.navigate(['/'])),
       map(() => false),
       catchError(() => {
         // Token invalid - clear it and allow access to login
